@@ -13,27 +13,17 @@ from ..config import settings
 
 log = logging.getLogger(__name__)
 
-_PROMPT = """\
-Sei un sistema OCR specializzato in documenti normativi aziendali italiani.
-Estrai e PULISCI il testo da questa pagina applicando le seguenti regole:
-
-PULIZIA OBBLIGATORIA:
-1. Elimina intestazioni e piè di pagina ripetitivi (nome documento, numero pagina, data, autore, disclaimer legale boilerplate)
-2. Correggi errori OCR classici: l→1, O→0, parole spezzate da a-capo nel mezzo di una frase
-3. Rimuovi artefatti (|||, ___, blocchi di simboli casuali)
-4. Unisci righe spezzate artificialmente dall'impaginazione; mantieni interruzioni di paragrafo reali
-
-STRUTTURA MARKDOWN:
-- Usa heading Markdown (#, ##, ###) per titoli e sezioni reali
-- Ricostruisci tabelle come tabelle Markdown se i dati sono tabulari
-- Usa liste puntate/numerate per elenchi reali
-- Note a piè di pagina numeriche: includi solo se non ridondanti, in sezione ## Note
-
-OUTPUT: solo il testo estratto e pulito in markdown. Nessun commento, nessuna spiegazione.\
-"""
+_PROMPT = (
+    "This is a page from an Italian corporate document. "
+    "Transcribe ALL text exactly as it appears, in reading order (left to right, top to bottom). "
+    "Preserve paragraph breaks. "
+    "For tables, use markdown table format. "
+    "For lists, use markdown list format. "
+    "Do NOT add explanations, summaries, or comments. Output only the transcribed text."
+)
 
 
-def _pdf_to_images(path: Path, dpi: int = 200) -> list[bytes]:
+def _pdf_to_images(path: Path, dpi: int = 150) -> list[bytes]:
     with tempfile.TemporaryDirectory() as tmp:
         prefix = Path(tmp) / "page"
         subprocess.run(
@@ -53,7 +43,7 @@ def _ocr_image_bytes(image_bytes: bytes) -> str:
             "messages": [{"role": "user", "content": _PROMPT, "images": [b64]}],
             "stream": False,
         },
-        timeout=120.0,
+        timeout=300.0,
     )
     resp.raise_for_status()
     return resp.json()["message"]["content"].strip()
