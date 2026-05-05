@@ -60,8 +60,8 @@ def _persist_metadata(page_id: int, meta: DocumentMetadata) -> None:
               (page_id, codice, versione, data_approvazione, redattore,
                approvatore, impattati, ambito, area, processo, riferimenti_ext)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb)
-            ON CONFLICT (page_id) DO UPDATE SET
-              codice = EXCLUDED.codice,
+            ON CONFLICT (codice) DO UPDATE SET
+              page_id = EXCLUDED.page_id,
               versione = EXCLUDED.versione,
               data_approvazione = EXCLUDED.data_approvazione,
               redattore = EXCLUDED.redattore,

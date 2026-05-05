@@ -59,6 +59,9 @@ def pdf_to_markdown(path: Path) -> str:
         return md
 
     log.info("low text density (%.0f chars/page); applying OCR", avg)
+    if settings.glm_ocr_enabled:
+        from .glm_ocr import glm_ocr_pdf
+        return glm_ocr_pdf(path)
     ocr_pdf = _ocr(path)
     try:
         md_ocr, _ = _extract_text(ocr_pdf)
