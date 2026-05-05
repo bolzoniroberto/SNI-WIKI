@@ -54,6 +54,8 @@ services:
       OCR_LANG: ita
       GLM_OCR_URL: ${GLM_OCR_URL:-}
       GLM_OCR_MODEL: ${GLM_OCR_MODEL:-glm-ocr:latest}
+      CLEAN_MODEL_URL: ${CLEAN_MODEL_URL:-}
+      CLEAN_MODEL: ${CLEAN_MODEL:-gemma4:latest}
     volumes:
       - ./inbox:/app/inbox
     networks: [sni]

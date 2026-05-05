@@ -18,6 +18,8 @@ class Settings(BaseSettings):
     ocr_text_threshold_chars: int = 100  # per page; below => treat as scanned
     glm_ocr_url: str = ""  # e.g. http://host.docker.internal:11434
     glm_ocr_model: str = "glm-ocr:latest"
+    clean_model_url: str = ""  # Ollama URL for text cleanup (e.g. http://host.docker.internal:11434)
+    clean_model: str = "gemma4:latest"
 
     @property
     def gemini_enabled(self) -> bool:
@@ -26,6 +28,10 @@ class Settings(BaseSettings):
     @property
     def glm_ocr_enabled(self) -> bool:
         return bool(self.glm_ocr_url)
+
+    @property
+    def clean_enabled(self) -> bool:
+        return bool(self.clean_model_url)
 
 
 settings = Settings()

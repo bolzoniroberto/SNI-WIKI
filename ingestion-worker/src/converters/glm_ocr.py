@@ -49,6 +49,18 @@ def _ocr_image_bytes(image_bytes: bytes) -> str:
     return resp.json()["message"]["content"].strip()
 
 
+def _clean_page(text: str) -> str:
+    """Clean a single OCR-extracted page via Gemma4 on Ollama."""
+    from ..clean import _clean_chunk
+    from ..config import settings as _s
+    if not _s.clean_enabled:
+        return text
+    log.info("CLEAN: page (%d chars) via %s", len(text), _s.clean_model)
+    cleaned = _clean_chunk(text, _s.clean_model_url, _s.clean_model)
+    log.info("CLEAN done: %d chars → %d chars", len(text), len(cleaned))
+    return cleaned
+
+
 def glm_ocr_pdf(path: Path) -> str:
     log.info("GLM-OCR: %s", path.name)
     images = _pdf_to_images(path)
@@ -56,9 +68,11 @@ def glm_ocr_pdf(path: Path) -> str:
     parts = []
     for i, img in enumerate(images, start=1):
         log.info("GLM-OCR: page %d/%d", i, len(images))
-        parts.append(f"\n\n<!-- page {i} -->\n\n{_ocr_image_bytes(img)}")
+        raw_page = _ocr_image_bytes(img)
+        cleaned = _clean_page(raw_page)
+        parts.append(f"\n\n<!-- page {i} -->\n\n{cleaned}")
     return "\n".join(parts).strip()
 
 
 def glm_ocr_image(path: Path) -> str:
-    return _ocr_image_bytes(path.read_bytes())
+    return _clean_page(_ocr_image_bytes(path.read_bytes()))
