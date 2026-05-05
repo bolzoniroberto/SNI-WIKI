@@ -13,11 +13,24 @@ from ..config import settings
 
 log = logging.getLogger(__name__)
 
-_PROMPT = (
-    "Estrai il testo da questa pagina di documento aziendale italiano. "
-    "Mantieni la struttura markdown (titoli, tabelle, elenchi puntati). "
-    "Restituisci solo il testo estratto, senza commenti aggiuntivi."
-)
+_PROMPT = """\
+Sei un sistema OCR specializzato in documenti normativi aziendali italiani.
+Estrai e PULISCI il testo da questa pagina applicando le seguenti regole:
+
+PULIZIA OBBLIGATORIA:
+1. Elimina intestazioni e piè di pagina ripetitivi (nome documento, numero pagina, data, autore, disclaimer legale boilerplate)
+2. Correggi errori OCR classici: l→1, O→0, parole spezzate da a-capo nel mezzo di una frase
+3. Rimuovi artefatti (|||, ___, blocchi di simboli casuali)
+4. Unisci righe spezzate artificialmente dall'impaginazione; mantieni interruzioni di paragrafo reali
+
+STRUTTURA MARKDOWN:
+- Usa heading Markdown (#, ##, ###) per titoli e sezioni reali
+- Ricostruisci tabelle come tabelle Markdown se i dati sono tabulari
+- Usa liste puntate/numerate per elenchi reali
+- Note a piè di pagina numeriche: includi solo se non ridondanti, in sezione ## Note
+
+OUTPUT: solo il testo estratto e pulito in markdown. Nessun commento, nessuna spiegazione.\
+"""
 
 
 def _pdf_to_images(path: Path, dpi: int = 200) -> list[bytes]:
