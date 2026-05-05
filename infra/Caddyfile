@@ -1,4 +1,4 @@
-{$SITE_HOSTNAME:wiki.local} {
+http://{$SITE_HOSTNAME:wiki.local} {
     encode gzip
 
     handle_path /api/ingestion/* {
