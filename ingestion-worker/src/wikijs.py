@@ -45,6 +45,12 @@ query GetPage($id: Int!) {
 }
 """
 
+GET_PAGE_BY_PATH = """
+query GetPageByPath($path: String!, $locale: String!) {
+  pages { singleByPath(path: $path, locale: $locale) { id path title } }
+}
+"""
+
 
 class WikiJSClient:
     def __init__(self) -> None:
@@ -64,6 +70,14 @@ class WikiJSClient:
         if "errors" in body:
             raise RuntimeError(f"GraphQL error: {body['errors']}")
         return body["data"]
+
+    def get_page_id_by_path(self, path: str, locale: str = "it") -> int | None:
+        try:
+            data = self._gql(GET_PAGE_BY_PATH, {"path": path, "locale": locale})
+            page = data["pages"]["singleByPath"]
+            return page["id"] if page else None
+        except Exception:  # noqa: BLE001
+            return None
 
     def create_page(
         self,
@@ -93,6 +107,13 @@ class WikiJSClient:
         result = data["pages"]["create"]
         rr = result["responseResult"]
         if not rr["succeeded"]:
+            # path already exists → update instead
+            if "already exists" in rr["message"]:
+                existing_id = self.get_page_id_by_path(path, locale)
+                if existing_id:
+                    log.info("path /%s exists (id=%d); updating", path, existing_id)
+                    self.update_page(existing_id, content, tags)
+                    return existing_id
             raise RuntimeError(f"create_page failed: {rr['message']}")
         return result["page"]["id"]
 
