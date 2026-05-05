@@ -1,0 +1,97 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: sni-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-wiki}
+      POSTGRES_USER: ${POSTGRES_USER:-wiki}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?postgres password required}
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+      - ./infra/postgres/init.sql:/docker-entrypoint-initdb.d/10-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-wiki} -d ${POSTGRES_DB:-wiki}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks: [sni]
+
+  wiki:
+    image: ghcr.io/requarks/wiki:2
+    container_name: sni-wiki
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DB_TYPE: postgres
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${POSTGRES_DB:-wiki}
+      DB_USER: ${POSTGRES_USER:-wiki}
+      DB_PASS: ${POSTGRES_PASSWORD}
+    volumes:
+      - wiki-data:/wiki/data
+    networks: [sni]
+
+  ingestion:
+    build: ./ingestion-worker
+    container_name: sni-ingestion
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-wiki}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-wiki}
+      WIKIJS_URL: http://wiki:3000
+      WIKIJS_TOKEN: ${WIKIJS_TOKEN}
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.5-flash}
+      GEMINI_MODEL_HEAVY: ${GEMINI_MODEL_HEAVY:-gemini-2.5-pro}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-text-embedding-004}
+      INBOX_DIR: /app/inbox
+      OCR_LANG: ita
+    volumes:
+      - ./inbox:/app/inbox
+    networks: [sni]
+
+  agent:
+    build: ./agent-service
+    container_name: sni-agent
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-wiki}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-wiki}
+      WIKIJS_URL: http://wiki:3000
+      WIKIJS_TOKEN: ${WIKIJS_TOKEN}
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      GEMINI_MODEL: ${GEMINI_MODEL_HEAVY:-gemini-2.5-pro}
+      ADMIN_GROUP: admins
+    networks: [sni]
+
+  caddy:
+    image: caddy:2
+    container_name: sni-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./infra/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on: [wiki, ingestion, agent]
+    networks: [sni]
+
+volumes:
+  pg-data:
+  wiki-data:
+  caddy-data:
+  caddy-config:
+
+networks:
+  sni:
+    driver: bridge

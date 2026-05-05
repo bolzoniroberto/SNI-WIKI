@@ -1,0 +1,15 @@
+{$SITE_HOSTNAME:wiki.local} {
+    encode gzip
+
+    handle_path /api/ingestion/* {
+        reverse_proxy ingestion:8000
+    }
+
+    handle_path /api/agent/* {
+        reverse_proxy agent:8080
+    }
+
+    handle {
+        reverse_proxy wiki:3000
+    }
+}

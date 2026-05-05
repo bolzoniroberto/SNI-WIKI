@@ -1,0 +1,23 @@
+[project]
+name = "sni-ingestion-worker"
+version = "0.1.0"
+description = "Ingestion pipeline: PDF/DOC -> markdown -> Wiki.js draft pages with metadata extraction"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.29",
+    "psycopg[binary,pool]>=3.1",
+    "httpx>=0.27",
+    "pdfplumber>=0.11",
+    "ocrmypdf>=16",
+    "mammoth>=1.7",
+    "python-multipart>=0.0.9",
+    "watchfiles>=0.21",
+    "google-genai>=0.3",
+    "pydantic>=2",
+    "pydantic-settings>=2",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
