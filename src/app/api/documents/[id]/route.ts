@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { DocStatus } from "@prisma/client";
+import { syncDocument, removeDocumentFromRAG } from "@/lib/rag/sync";
 
 export async function GET(
   _req: Request,
@@ -64,9 +65,21 @@ export async function PUT(
     },
   });
 
-  // FASE 3 hook (stub): se passa ad active, sincronizza con ChromaDB
-  if (nextStatus === "active" && existing.status !== "active") {
-    console.log(`[RAG] (stub) sync attivazione documento ${id} v${nextVersion}`);
+  // Sync RAG: chunki + upsert quando il documento diventa attivo o viene
+  // aggiornato mentre già attivo. Rimuovi dai chunk se passa fuori da active.
+  try {
+    if (nextStatus === "active") {
+      await syncDocument({
+        id: updated.id,
+        title: updated.title,
+        content: updated.content,
+        version: updated.version,
+      });
+    } else if (existing.status === "active") {
+      await removeDocumentFromRAG(updated.id);
+    }
+  } catch (err) {
+    console.error("[RAG] Errore durante sync (documento salvato comunque):", err);
   }
 
   return NextResponse.json(updated);
@@ -78,5 +91,10 @@ export async function DELETE(
 ) {
   const { id } = await params;
   await prisma.document.delete({ where: { id } });
+  try {
+    await removeDocumentFromRAG(id);
+  } catch (err) {
+    console.error("[RAG] Errore rimozione chunk:", err);
+  }
   return NextResponse.json({ ok: true });
 }

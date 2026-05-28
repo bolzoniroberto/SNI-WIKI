@@ -3,12 +3,14 @@
 import { useCallback, useEffect, useState } from "react";
 import { Sidebar, type DocListItem } from "@/components/Sidebar";
 import { Editor, type DocFull } from "@/components/Editor";
+import { ChatDrawer } from "@/components/ChatDrawer";
 
 export default function Home() {
   const [docs, setDocs] = useState<DocListItem[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [current, setCurrent] = useState<DocFull | null>(null);
   const [loading, setLoading] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
 
   const refreshList = useCallback(async () => {
     const res = await fetch("/api/documents", { cache: "no-store" });
@@ -72,6 +74,22 @@ export default function Home() {
           {loading ? "Caricamento…" : "Seleziona o crea un documento"}
         </div>
       )}
+
+      <button
+        onClick={() => setChatOpen((v) => !v)}
+        className="fixed bottom-5 right-5 z-40 bg-slate-900 text-white rounded-full shadow-lg px-4 py-3 text-sm hover:bg-slate-700"
+      >
+        {chatOpen ? "Chiudi chat" : "💬 Chatta con le Procedure"}
+      </button>
+
+      <ChatDrawer
+        open={chatOpen}
+        onClose={() => setChatOpen(false)}
+        onOpenDocument={(id) => {
+          setSelectedId(id);
+          setChatOpen(false);
+        }}
+      />
     </main>
   );
 }
