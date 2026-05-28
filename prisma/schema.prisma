@@ -1,0 +1,42 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum DocStatus {
+  draft
+  active
+  archived
+}
+
+model Document {
+  id          String            @id @default(cuid())
+  title       String
+  content     String            @db.Text
+  status      DocStatus         @default(draft)
+  version     Int               @default(1)
+  frontmatter Json?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  versions    DocumentVersion[]
+
+  @@index([status])
+  @@index([updatedAt])
+}
+
+model DocumentVersion {
+  id         String    @id @default(cuid())
+  documentId String
+  version    Int
+  title      String
+  content    String    @db.Text
+  status     DocStatus
+  createdAt  DateTime  @default(now())
+  document   Document  @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@unique([documentId, version])
+}
