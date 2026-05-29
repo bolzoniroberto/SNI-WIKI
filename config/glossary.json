@@ -1,0 +1,18 @@
+{
+  "replacements": [
+    { "from": "Direzione del Personale", "to": "Direzione HR" },
+    { "from": "Direzione Risorse Umane", "to": "Direzione HR" },
+    { "from": "Risorse Umane", "to": "Direzione HR" },
+    { "from": "Ufficio del Personale", "to": "Ufficio HR" },
+    { "from": "Ufficio Risorse Umane", "to": "Ufficio HR" },
+    { "from": "Responsabile del Personale", "to": "HR Manager" },
+    { "from": "Responsabile Risorse Umane", "to": "HR Manager" },
+    { "from": "Il Sole 24 Ore S.p.A.", "to": "Il Sole 24 Ore" },
+    { "from": "Il Sole24Ore", "to": "Il Sole 24 Ore" },
+    { "from": "Sole24Ore", "to": "Il Sole 24 Ore" },
+    { "from": "CCNL Giornalistico", "to": "CCNL Giornalisti" },
+    { "from": "contratto collettivo giornalisti", "to": "CCNL Giornalisti" },
+    { "from": "buono pasto", "to": "ticket restaurant" },
+    { "from": "buoni pasto", "to": "ticket restaurant" }
+  ]
+}
